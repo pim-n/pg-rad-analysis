@@ -13,7 +13,13 @@ cd pg-rad-analysis
 conda env create -f environment.yml
 ```
 
-with the conda environment activated, you may try to run
+You activate the conda environment with
+
+```
+conda activate pg-rad-analysis
+```
+
+With the conda environment activated, you may try to run
 
 ```
 pgrad --example --showplots
