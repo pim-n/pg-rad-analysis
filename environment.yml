@@ -1,0 +1,10 @@
+name: pg-rad-analysis
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - pymc
+  - jupyterlab
+  - pip:
+    - git+ssh://git@github.com/pim-n/pg-rad.git@dev
