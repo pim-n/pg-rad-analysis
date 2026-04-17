@@ -5,6 +5,7 @@ dependencies:
   - python=3.12
   - pip
   - pymc
+  - seaborn
   - jupyterlab
   - pip:
     - git+ssh://git@github.com/pim-n/pg-rad.git@dev
