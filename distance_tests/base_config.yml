@@ -1,0 +1,26 @@
+name: test
+speed: 8.33
+acquisition_time: 1
+
+path:
+  length:
+    - 1000
+  segments:
+    - straight
+
+sources:
+  s1:
+    activity_MBq: 100
+    isotope: Cs137
+    gamma_energy_keV: 662
+    position: [0,0,0]
+  s2:
+    activity_MBq: 100
+    isotope: Cs137
+    gamma_energy_keV: 662
+    position: [0,0,0]
+
+detector: LU_NaIR
+
+options:
+    bkg_cps: 0
