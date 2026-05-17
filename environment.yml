@@ -3,9 +3,9 @@ channels:
   - conda-forge
 dependencies:
   - python=3.12
-  - pip
   - pymc
   - seaborn
   - jupyterlab
+  - pip
   - pip:
-    - git+ssh://git@github.com/pim-n/pg-rad.git@dev
+    - git+https://github.com/pim-n/pg-rad.git@v0.1.0
