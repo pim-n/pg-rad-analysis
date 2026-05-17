@@ -15,23 +15,13 @@ from tools.utils import return_efficiency_filename_path
 from tools.interpolators import AttenuationInterpolator
 from tools.tensor_interpolator import interpolate1d
 
+import sys
+from pathlib import Path
+root_dir = Path(__file__).parent.resolve()
+sys.path.append(str(root_dir))
+attenuation_table_path = root_dir / "tools" / "attenuation_table.csv"
 
-DETECTOR = "NaIR"
-NUM_SOURCE = 2
-SCALE = 1e6
-BRANCH_RATIO = 0.851
-AIR_DENSITY = 1.243
-CORRECTION_COEFFICIENT = 0.1
-SOURCE_ENERGY = 661.657
-DET_EFF = 0.021588808459214504
-
-attenuation_df = pd.read_csv('./tools/attenuation_table.csv')
-attenuation_interpolator = AttenuationInterpolator(attenuation_df)
-MU_AIR = attenuation_interpolator.interpolate(SOURCE_ENERGY)
-MU_AIR *= CORRECTION_COEFFICIENT * AIR_DENSITY
-
-
-def set_parameters(raw_data, params, idxs=None, n_sources=NUM_SOURCE):
+def set_parameters(raw_data, params, idxs=None, n_sources=2):
     cps = raw_data.ROI_P
     if idxs:
         peaks = idxs
@@ -60,10 +50,10 @@ def set_parameters(raw_data, params, idxs=None, n_sources=NUM_SOURCE):
         "MAX_Y": [],
         "max_cps": [],
         "cps": cps.values,
-        "LOWER_X": -params["size"][0],
-        "UPPER_X": params["size"][0],
-        "LOWER_Y": -params["size"][1],
-        "UPPER_Y": params["size"][1],
+        "LOWER_X": raw_data["East"].min(),
+        "UPPER_X": raw_data["East"].max(),
+        "LOWER_Y": raw_data["North"].min(),
+        "UPPER_Y": raw_data["North"].max(),
         "indexes": peaks
     }
     for _, idx in enumerate(peaks):
@@ -74,7 +64,7 @@ def set_parameters(raw_data, params, idxs=None, n_sources=NUM_SOURCE):
     return params_, peaks_found
 
 
-def mean_cps_tt(**kwargs):
+def mean_cps_tt(SCALE, BRANCH_RATIO, DET_EFF, MU_AIR, **kwargs):
 
     src_x = kwargs["x"]
     src_y = kwargs["y"]
@@ -105,8 +95,10 @@ def build_model(
     mean_bkg, bkg_std,
     cps,
     coordinates,
+    SCALE, BRANCH_RATIO, DET_EFF, MU_AIR,
     prior_activity=1000,
-    no_init_val=False
+    no_init_val=False,
+    num_sources=2
 ):
     pos_x_tt = tt.as_tensor_variable(x_pos, dtype="float64")
     pos_y_tt = tt.as_tensor_variable(y_pos, dtype="float64")
@@ -116,7 +108,7 @@ def build_model(
     y_init = coordinates[:, 1]
 
     y_init = [y+1e-3 if np.isclose(0, y) else y for y in y_init]
-    sources = {"sources": range(NUM_SOURCE)}
+    sources = {"sources": range(num_sources)}
 
     with pm.Model(coords=sources) as model:
         data = pm.Data("observed_cps", cps)
@@ -156,6 +148,86 @@ def build_model(
         )
 
         source_cps = mean_cps_tt(
+            SCALE, BRANCH_RATIO, DET_EFF, MU_AIR,
+            x_position=pos_x_tt,
+            y_position=pos_y_tt,
+            x=x,
+            y=y,
+            acts=activity
+        )
+
+        mu_total = source_cps.sum(axis=0) + bkg
+        mu_total = tt.clip(mu_total, 1e-6, 1e9)  # protection from zeros
+        pm.Poisson(
+            "predicted_cps",
+            mu=mu_total,
+            observed=data
+        )
+
+    return model
+
+
+def build_model_2(
+    x_pos, y_pos,
+    lower_x, upper_x,
+    lower_y, upper_y,
+    mean_bkg, bkg_std,
+    cps,
+    coordinates,
+    SCALE, BRANCH_RATIO, DET_EFF, MU_AIR,
+    prior_activity=1000,
+    no_init_val=False,
+    num_sources=2
+):
+    pos_x_tt = tt.as_tensor_variable(x_pos, dtype="float64")
+    pos_y_tt = tt.as_tensor_variable(y_pos, dtype="float64")
+
+    coordinates = np.asarray(coordinates)
+    x_init = coordinates[:, 0]
+    y_init = coordinates[:, 1]
+
+    y_init = [y+1e-3 if np.isclose(0, y) else y for y in y_init]
+    sources = {"sources": range(num_sources)}
+
+    with pm.Model(coords=sources) as model:
+        data = pm.Data("observed_cps", cps)
+        if np.isclose(bkg_std, 0.0):
+            bkg = mean_bkg
+        else:
+            sigma_bkg = pm.HalfNormal("sigma_bkg", bkg_std)
+            bkg = pm.TruncatedNormal(
+                "bkg",
+                mu=mean_bkg,
+                sigma=sigma_bkg,
+                lower=0
+            )
+
+        if no_init_val:
+            x = pm.Uniform(
+                "x_src", lower=lower_x, upper=upper_x, dims="sources"
+            )
+            y = pm.Uniform(
+                "y_src", lower=lower_y, upper=upper_y, dims="sources"
+            )
+        else:
+            y = pm.Uniform(
+                "y_src", lower=lower_y, upper=upper_y,
+                dims="sources", initval=y_init
+            )
+            x = pm.Uniform(
+                "x_src", lower=lower_x, upper=upper_x,
+                dims="sources", initval=x_init
+            )
+
+        activity = pm.LogNormal(
+            "act_src",
+            mu=np.log(prior_activity),
+            sigma=2,   # широкий 0.7 or 1.2 more wide
+            dims="sources"
+        )
+
+        source_cps = mean_cps_tt(
+            SCALE, BRANCH_RATIO, DET_EFF, MU_AIR,
             x_position=pos_x_tt,
             y_position=pos_y_tt,
             x=x,
@@ -223,14 +295,28 @@ def run(
     df,
     params,
     csv_file,
+    DETECTOR,
+    DET_EFF,
+    SCALE=1e6,
+    BRANCH_RATIO = 0.851,
+    AIR_DENSITY = 1.243,
+    CORRECTION_COEFFICIENT = 0.1,
+    SOURCE_ENERGY = 661.657,
     simnum: int = 2000,
     burnin: int = 500,
-    n_chains: int = 2
+    n_chains: int = 2,
+    n_sources: int = 2
 ):
+
+    attenuation_df = pd.read_csv(attenuation_table_path)
+    attenuation_interpolator = AttenuationInterpolator(attenuation_df)
+    MU_AIR = attenuation_interpolator.interpolate(SOURCE_ENERGY)
+    MU_AIR *= CORRECTION_COEFFICIENT * AIR_DENSITY
+
     indexes = None
 
-    real_params = parse_filename(csv_file, number_of_sources=NUM_SOURCE)
-    init_params, peaks_found = set_parameters(df, params, idxs=indexes)
+    real_params = parse_filename(csv_file, number_of_sources=n_sources)
+    init_params, peaks_found = set_parameters(df, params, idxs=indexes, n_sources=n_sources)
 
     if not peaks_found:
         print("[!] No 2 peaks found. Continuing...")
@@ -252,7 +338,7 @@ def run(
     max_idxs = init_params["indexes"]
     ref_coords_x = [real_params[j+1].get("x") for j in range(len(real_params))]
     ref_coords_y = [real_params[j+1].get("y") for j in range(len(real_params))]
-    max_coordinates = build_coordinates(MAX_X, MAX_Y, NUM_SOURCE)
+    max_coordinates = build_coordinates(MAX_X, MAX_Y, n_sources)
     true_acts = [real_params[i+1]["act"] for i in range(len(real_params))]
 
     model = build_model(
@@ -262,7 +348,9 @@ def run(
         MEAN_BKG_CPS, BKG_STD,
         cps,
         max_coordinates,
-        no_init_val=False
+        SCALE, BRANCH_RATIO, DET_EFF, MU_AIR,
+        no_init_val=False,
+        num_sources=n_sources
     )
 
     seed = random.randint(10, 10000)

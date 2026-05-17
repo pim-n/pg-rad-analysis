@@ -66,9 +66,9 @@ def plot_base_distribution(x: np.ndarray, cps: np.ndarray, max_x: List[int]) -> 
     plt.show()
 
 
-def plot_act_density(samples: dict, true_act=None):
+def plot_act_density(samples: dict, true_act=None, ax = None,):
     n_rows = len(samples)
-    fig, axes = plt.subplots(n_rows, 1, figsize=(12, 6), sharex=True, squeeze=False)
+    fig, axes = plt.subplots(n_rows, 1, figsize=(6, 4), sharex=True, squeeze=False)
     axes = axes.flatten()
     for i, ax in enumerate(axes):
         ax.spines.top.set_visible(False)
@@ -89,12 +89,14 @@ def plot_location(
     src_x_real,
     src_y_real,
     merged_x,
-    merged_y
+    merged_y,
+    ax = None,
 ):
     x_coords = data.East
     y_coords = data.North
 
-    fig, ax = plt.subplots(figsize=(10, 6))
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8,4))
     ax.plot(x_coords, y_coords, color="b", linewidth=1)
     ax.scatter(src_x_real, src_y_real, color="black", marker="^")
 
@@ -110,7 +112,6 @@ def plot_location(
             alpha=0.6
         )
     ax.set_xlabel("X")
-    ax.set_ylabel("Y")
+    ax.set_ylabel("Y")    
+    plt.tight_layout()
     plt.grid(True, alpha=0.5)
-    plt.show()
-    

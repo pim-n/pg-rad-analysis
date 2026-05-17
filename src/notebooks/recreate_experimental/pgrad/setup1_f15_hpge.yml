@@ -1,0 +1,19 @@
+acquisition_time: 1
+detector: LU_HPGe_90
+name: Setup1_F15_HPGe
+options:
+  bkg_cps: 0
+path:
+  file: Setup1_F15_HPGe.csv
+  east_col_name: East
+  north_col_name: North
+sources:
+  s1:
+    activity_MBq: 1251
+    gamma_energy_keV: 662
+    isotope: Cs137
+    position:
+      along_path: 280
+      dist_from_path: 77
+      side: right
+speed: 4.16

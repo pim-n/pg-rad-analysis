@@ -1,0 +1,1 @@
+{"name": "Setup1_F15_HPGe", "size": [344.0, 344.0], "detector": {"name": "LU_HPGe_90", "type": "HPGe", "is_isotropic": false, "field_eff": 0.002410082036721662}, "sources": [{"name": "s1", "isotope": "Cs137", "primary_gamma": 661.657, "activity": 1251.0, "position": [205.40740961551356, 282.68071919724144, 0], "dist_from_path": 77.00000000000001}]}

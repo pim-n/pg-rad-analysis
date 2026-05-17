@@ -1,0 +1,19 @@
+acquisition_time: 1
+detector: LU_NaIR
+name: Road3_F30
+options:
+  bkg_cps: 107
+path:
+  east_col_name: East
+  file: Road3_NaIR_ROI_CPS_subset.csv
+  north_col_name: North
+sources:
+  s1:
+    activity_MBq: 601
+    gamma_energy_keV: 662
+    isotope: Cs137
+    position:
+      along_path: 495
+      dist_from_path: 72
+      side: left
+speed: 16.67

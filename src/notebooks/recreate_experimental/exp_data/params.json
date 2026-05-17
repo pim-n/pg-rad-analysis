@@ -1,0 +1,11 @@
+{
+    "scenario": ["Setup1", "Road2", "Road3"],
+    "road_length_km": ["0.36", "77.6", "72.9"],
+    "source_activity_MBq": [1251, 565, 601],
+    "source_activity_unc": [41, 18, 20],
+    "bkg_cps": [51, 91, 90],
+    "bkg_cps_unc": [9, 15, 17],
+    "distance_from_road_m": [82, 100, 72],
+    "roadside": ["right", "right", "left"],
+    "prior_type": ["informed", "generic", "generic"]
+}

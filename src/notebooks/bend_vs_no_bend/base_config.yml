@@ -1,24 +1,28 @@
-name: test
+name: no bend
 speed: 8.33
 acquisition_time: 1
 
 path:
   length:
-    - 1000
+    - 100
+    - 150
+    - 100
+    - 150
   segments:
+    - turn_left: 45
     - straight
-
+    - straight
+    - straight
+    
 sources:
   s1:
     activity_MBq: 100
     isotope: Cs137
     gamma_energy_keV: 662
-    position: [0,0,0]
-  s2:
-    activity_MBq: 100
-    isotope: Cs137
-    gamma_energy_keV: 662
-    position: [0,0,0]
+    position:
+      along_path: 308.33
+      dist_from_path: 63.666667
+      side: 'left'
 
 detector: LU_NaIR
 

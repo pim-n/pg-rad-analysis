@@ -1,0 +1,34 @@
+name: source separation test
+speed: 8.33
+acquisition_time: 1
+
+path:
+  length:
+    - 100
+    - 2000
+  segments:
+    - turn_left: 30
+    - straight
+
+sources:
+  s1:
+    activity_MBq: 300
+    isotope: Cs137
+    gamma_energy_keV: 662
+    position:
+      along_path: a
+      dist_to_path: 32
+      side: left
+  s2:
+    activity_MBq: 300
+    isotope: Cs137
+    gamma_energy_keV: 662
+    position:
+      along_path: b
+      dist_to_path: 32
+      side: left
+
+detector: LU_HPGe_90
+
+options:
+    bkg_cps: 0

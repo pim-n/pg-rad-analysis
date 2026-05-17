@@ -1,0 +1,20 @@
+name: drone_test_50_cps
+speed: 5
+acquisition_time: 1
+path:
+  file: ../coords.csv
+  east_col_name: East
+  north_col_name: North
+  z: 25
+sources:
+  s1:
+    activity_MBq: 50
+    isotope: Cs137
+    gamma_energy_keV: 662
+    position:
+    - 50
+    - 50
+    - 0
+detector: LU_NaI_3inch
+options:
+  bkg_cps: 50

@@ -1,0 +1,1 @@
+{"name": "drone_test_30_cps", "size": [100.0, 100.0], "detector": {"name": "LU_NaI_3inch", "type": "NaI", "is_isotropic": true, "field_eff": 0.0020677034872822733}, "sources": [{"name": "s1", "isotope": "Cs137", "primary_gamma": 661.657, "activity": 50.0, "position": [50.0, 50.0, 0.0], "dist_from_path": 25.609845714702466}]}
